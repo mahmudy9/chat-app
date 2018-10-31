@@ -1,5 +1,5 @@
 <?php
-
+use App\Chat;
 /*
 |--------------------------------------------------------------------------
 | Broadcast Channels
@@ -25,6 +25,15 @@ Broadcast::channel('message-channel.{from}.{to}' , function($user , $from , $to)
 
 Broadcast::channel('error-channel.{userid}' , function($user , $userid){
     if($user->id == $userid)
+    {
+        return true;
+    }
+    return false;
+});
+
+Broadcast::channel('chat-channel.{chatid}.{to}' , function($user , $chatid , $to){
+    //$chat = Chat::find($chatid);
+    if($to == $user->id)
     {
         return true;
     }

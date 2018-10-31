@@ -9,6 +9,7 @@ use App\Chat;
 use App\Message;
 use App\Events\ErrorMessage;
 use App\Events\MessageEvent;
+use App\Events\ChatEvent;
 
 class ChatController extends Controller
 {
@@ -99,21 +100,24 @@ class ChatController extends Controller
 
         $chat = Chat::find($request->chatid);
 
-        if($chat->user1_id == auth()->user()->id)
+        if($chat['user1_id'] == auth()->user()->id)
         {
-            $to = $chat->user2_id;
-        } elseif($chat->user2_id == auth()->user()->id)
+            $to = $chat['user2_id'];
+        } elseif($chat['user2_id'] == auth()->user()->id)
         {
-            $to = $chat->user1_id;
+            $to = $chat['user1_id'];
         }
-
+        //dd($to);
         $message = new Message;
         $message->chat_id = $request->chatid;
         $message->from = auth()->user()->id;
         $message->to = $to;
+        $message->fromusername= auth()->user()->name;
+        $message->tousername = User::find($to)->name;
         $message->body = $request->body;
         $message->save();
         event(new MessageEvent(auth()->user() , $message));
+        event(new ChatEvent($request->chatid , $to ,$message));
         return $message;
     }
 

@@ -8,7 +8,7 @@
 @else
     <div id="msgs">
     @foreach($messages as $message)
-        <p><em><b>{{App\User::find($message->from)->name}}</b></em> : {{$message->body}}</p>
+        <p><em><b>{{$message->fromusername}}</b></em> : {{$message->body}}</p>
         <hr>
     @endforeach
     </div>
@@ -16,7 +16,7 @@
 
 
 
-<form  id="chatstore" v-on:submit.prevent="sendmessage" >
+<form v-on:submit.prevent="sendmessage()" >
 <div class="form-group">
 <input type="text" v-model="body"/>
 </div>
@@ -32,13 +32,17 @@
 @section('script')
 <script>
     var socket = io('http://localhost:3000');
+    socket.on(`private-chat-channel.{{$chatid}}.{{auth()->user()->id}}:App\\Events\\ChatEvent` , function(msg){
+        //console.log(msg);
+        $('#msgs').append(`<p><em><b>${msg.data.fromusername}</b></em> : ${msg.data.body}</p><hr>`)
+    });
     var self= 'hi';
     var app = new Vue({
         el:'#app',
         data:{
             body:'',
             chatid:{{$chatid}},
-            socket:socket,
+            socket:io('http://localhost:3000'),
             message:'',
             self:self
         },
@@ -50,8 +54,8 @@
                 }).then( function(response){
                     this.message=response;
                     this.socket.on(`private-message-channel.${this.message.data.from}.${this.message.data.to}:App\\Events\\MessageEvent` , function(msg) {
-                        console.log(msg);
-                        $('#msgs').append(`<p><em><b>{{$from->name}}</b></em> : ${msg.data.body}</p><hr>`);
+                        //console.log(msg);
+                        $('#msgs').append(`<p><em><b>${msg.data.fromusername}</b></em> : ${msg.data.body}</p><hr>`);
                         this.body='';
                     });
                 }).catch(function(error){
@@ -59,19 +63,7 @@
                         console.log(msg);
                     });
                     console.error(error);
-                })
-            },
-            send_message:function(){
-                this.socket.on(`private-error-channel.{{auth()->user()->id}}` , function(msg){
-                    console.log(msg);
-                })
-            },
-            getmessages:function() {
-                axios.get('/chatroom/'+this.chatid).then(function(response){
-                    console.log(response);
-                }).catch(function(err) {
-                    console.log(err);
-                })
+                });
             }
         },
         mounted:function() {

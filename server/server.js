@@ -29,6 +29,18 @@ rediss.on('pmessage' , function( pattern ,channel , message) {
     io.emit(channel+':'+message.event , message.data);
 });
 
+var redischatchannel = new Redis();
+
+redischatchannel.psubscribe('private-chat-channel.*' , function(err , count){
+    console.log('error is'+err+' and count is '+count);
+})
+
+redischatchannel.on('pmessage' , function(pattern , channel , message) {
+    console.log(channel +" "+message);
+    message = JSON.parse(message);
+    io.emit(channel+':'+message.event , message.data);
+})
+
 
 http.listen(3000 , function() {
     console.log('server lisening at port 3000');
