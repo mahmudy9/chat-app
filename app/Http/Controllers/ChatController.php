@@ -89,7 +89,8 @@ class ChatController extends Controller
         if($validator->fails())
         {
             event(new ErrorMessage( auth()->user() ,$validator->errors()));
-            return response()->json(['errors' =>$validator->errors() ] , 400);
+            
+            return response()->json(['errors' => $validator->errors()] , 400);
         }
         //dd($request);
         if(!Chat::find($request->input('chatid')))

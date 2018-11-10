@@ -14,8 +14,6 @@
     </div>
 @endif
 
-
-
 <form id="chatform" >
 <div class="form-group">
 <input type="text" id="body"/>
@@ -40,12 +38,49 @@
         $('#msgs').append(`<p><em><b>${msg.data.fromusername}</b></em> : ${msg.data.body}</p><hr>`)
     });
 
-
+    $.ajaxSetup({
+        headers : {
+            'X-CSRF-TOKEN' : $('meta[name="csrf-token"]').attr('content')
+        }
+    })
 
     $('#chatform').submit(function(e) {
         e.preventDefault();
+        var data = {
+            body : $('#body').val(),
+            chatid : {{$chatid}}
+        }
+
+        $.ajax({
+            type: 'POST',
+            url: "{{url('/store-message')}}",
+            data: data,
+            success: function(response) {
+                console.log(response);
+                var message=response;
+                socket.removeAllListeners(`private-message-channel.${message.from}.${message.to}:App\\Events\\MessageEvent`);
+                socket.on(`private-message-channel.${message.from}.${message.to}:App\\Events\\MessageEvent` , function(msg) {
+                    console.log(msg);
+                    $('#msgs').append(`<p><em><b>${msg.data.fromusername}</b></em> : ${msg.data.body}</p><hr>`);
+                    $('#body').val('');
+                });
+            },
+            error: function(jqXhr , statusText , errorThrown) {
+                socket.removeAllListeners(`private-error-channel.{{auth()->user()->id}}:App\\Events\\ErrorMessage`);
+                socket.on(`private-error-channel.{{auth()->user()->id}}:App\\Events\\ErrorMessage` , function(msg){
+                    console.log(msg);
+                });
+                console.error(errorThrown , statusText);
+            },
+        });
+
+    });
+
+
+/*    $('#chatform').submit(function(e) {
+        e.preventDefault();
         var body = $('#body').val();
-        var chatid = {{$chatid}};
+        var chatid ={{$chatid}} ;
         axios.post('/store-message' , {
             body:body,
             chatid:chatid
@@ -59,12 +94,13 @@
                 $('#body').val('');
             });
         }).catch(function(error){
-            this.socket.on(`private-error-channel.{{auth()->user()->id}}:App\\Events\\ErrorMessage` , function(msg){
+            socket.removeAllListeners(`private-error-channel.{{auth()->user()->id}}:App\\Events\\ErrorMessage`);
+            socket.on(`private-error-channel.{{auth()->user()->id}}:App\\Events\\ErrorMessage` , function(msg){
                 console.log(msg);
             });
             console.error(error);
         });
     })
-
+*/
 </script>
 @endsection
